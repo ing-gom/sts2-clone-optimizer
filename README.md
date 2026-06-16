@@ -4,6 +4,10 @@ A **Slay the Spire 2** mod that keeps the **Pael's Growth** rest-site **Clone** 
 
 [한국어 README](README.ko.md)
 
+[![Clone progress demo](media/thumbnail.png)](media/clone-demo.mp4)
+
+> The top progress bar (with percentage) shown while Pael's Growth clones a large deck — no freeze. [▶ Watch the demo](media/clone-demo.mp4)
+
 ## The problem
 
 Pael's Growth's rest option clones **every Clone-enchanted card in your deck** — and that count **doubles every rest**. The base game performs this the slow way: it clones the cards one-by-one with a full fly-in animation each, then previews **all** of the new cards at once (one card node per clone). Once you have many Clone-enchanted cards, choosing the option **freezes the game** for seconds in a single frame.
