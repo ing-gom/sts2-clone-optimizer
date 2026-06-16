@@ -1,0 +1,37 @@
+[size=6][b]StS2 Clone Optimizer[/b][/size]
+
+[b]Keeps Pael's Growth's rest-site Clone event smooth on large decks — no more multi-second freeze.[/b]
+
+[img]https://raw.githubusercontent.com/ing-gom/sts2-clone-optimizer/master/media/thumbnail.png[/img]
+
+[size=4][b]The problem[/b][/size]
+Pael's Growth's rest "Clone" option duplicates [b]every Clone-enchanted card in your deck[/b] — and that count [b]doubles every rest[/b]. The base game does this the slow way: it clones the cards one-by-one with a full fly-in animation each, then previews [b]all[/b] of the new cards at once (one card node per clone). Once you have many Clone-enchanted cards, choosing the option [b]freezes the game for seconds[/b] in a single frame.
+
+[size=4][b]What this mod does[/b][/size]
+When a clone is large enough to matter, it duplicates the [b]same cards[/b] (identical gameplay result) but:
+[list]
+[*]Batches the add and skips the per-card fly animation
+[*]Spreads the work across frames so the game [b]never hard-freezes[/b] — it stays responsive while cloning
+[*]Shows a [b]top-screen percentage progress bar[/b] so you can see it advancing (localized, 14 languages)
+[*]Plays the clone effect on a small sample of cards instead of rendering one node per clone
+[/list]
+Small clones are left [b]completely untouched[/b] — the original animation is kept.
+
+[size=4][b]Does it change gameplay?[/b][/size]
+No. The exact same cards are cloned into your deck; only the [b]rendering and timing[/b] of the clone are optimized. Card effects, RNG, and outcomes are unchanged.
+
+[size=4][b]Installation[/b][/size]
+[list=1]
+[*]Download and extract the archive.
+[*]Place the [b]Sts2CloneOptimizer[/b] folder into your Slay the Spire 2 [b]mods/[/b] directory.
+[*]Enable the mod in-game.
+[/list]
+
+[size=4][b]Compatibility[/b][/size]
+[list]
+[*]Client-side only — solo play recommended.
+[*]No configuration required; it activates automatically only on large clone events.
+[/list]
+
+[size=4][b]Source[/b][/size]
+[url=https://github.com/ing-gom/sts2-clone-optimizer]github.com/ing-gom/sts2-clone-optimizer[/url] — MIT License © 2026 inggom
