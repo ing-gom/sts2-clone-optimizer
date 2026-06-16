@@ -1,0 +1,11 @@
+{
+  "id": "Sts2CloneOptimizer",
+  "name": "StS2 Clone Optimizer",
+  "author": "inggom",
+  "description": "Pael's Growth의 휴식 복제(Clone) 이벤트를 대용량 덱에서도 멈추지 않게 최적화합니다. 바닐라는 복제(Clone) 인챈트가 붙은 카드를 한 장씩 전부 복제하며 각각 미리보기 연출을 띄워, 그런 카드가 많아지면 게임이 멈춥니다. 이 모드는 복제를 배치 처리하고, 화면 상단에 진행 퍼센트 바를 표시하며, 작업을 여러 프레임에 나눠 게임이 멈추지 않게 합니다. 일반 덱은 영향 없으며, 카드 효과·RNG·결과는 변하지 않고 복제의 렌더링/타이밍만 최적화합니다.",
+  "version": "v0.1.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [],
+  "affects_gameplay": false
+}
