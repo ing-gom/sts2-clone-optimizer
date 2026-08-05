@@ -33,8 +33,13 @@ internal static class CloneRestThrottlePatch
 {
     // Below this many Clone-enchanted cards, let vanilla run (animation is fine and pretty).
     private const int FastPathThreshold = 50;
-    // Cards cloned per frame before yielding (keeps the frame loop alive).
-    private const int CloneChunk = 100;
+    // Per-frame clone work is time-sliced: keep each frame's clone burst under this budget so the
+    // game keeps rendering smoothly no matter how many cards are cloned. A fixed per-frame count
+    // stutters when each deep-clone is slow (huge decks / slow CPUs); a time slice adapts.
+    private const double FrameBudgetMs = 6.0;
+    // Floor so we don't thrash on tiny per-frame batches; ceiling so one batched Add never spikes.
+    private const int MinChunk = 16;
+    private const int MaxChunk = 256;
     // How many clones still get the fly-in preview effect (bounded, vs vanilla's all-N).
     private const int PreviewCap = 25;
     // Only show the progress bar when the clone is big enough to actually take time.
@@ -62,7 +67,7 @@ internal static class CloneRestThrottlePatch
         ProgressBar? bar = null;
         if (tree != null && total >= ProgressOverlayMin)
         {
-            overlay = MakeProgressOverlay(total, out bar);
+            overlay = ProgressOverlay.Make(Strings.Get("cloning"), total, out bar);
             tree.Root.AddChild(overlay);
             // Yield once so the bar paints before the first heavy chunk.
             await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
@@ -71,22 +76,31 @@ internal static class CloneRestThrottlePatch
         try
         {
             IReadOnlyList<CardPileAddResult>? firstResults = null;
-            for (int i = 0; i < total; i += CloneChunk)
+            var sw = new System.Diagnostics.Stopwatch();
+            int done = 0;
+            while (done < total)
             {
-                int end = System.Math.Min(i + CloneChunk, total);
-                var chunkClones = new List<CardModel>(end - i);
-                for (int j = i; j < end; j++)
-                    chunkClones.Add(owner.RunState.CloneCard(toClone[j]));
+                sw.Restart();
+                var chunkClones = new List<CardModel>();
+                // Clone until either the per-frame time budget is spent (past MinChunk) or we hit
+                // the MaxChunk ceiling — adapts the batch size to how fast each clone actually is.
+                while (done < total
+                    && chunkClones.Count < MaxChunk
+                    && (chunkClones.Count < MinChunk || sw.Elapsed.TotalMilliseconds < FrameBudgetMs))
+                {
+                    chunkClones.Add(owner.RunState.CloneCard(toClone[done]));
+                    done++;
+                }
 
                 // Batched add, no per-card fly visuals. Model + top-bar deck counter still update
                 // fully (skipVisuals only suppresses the NCard table animation, not ContentsChanged).
                 var res = await CardPileCmd.Add(chunkClones, PileType.Deck, skipVisuals: true);
                 firstResults ??= res;
 
-                if (bar != null && GodotObject.IsInstanceValid(bar)) bar.Value = end;
+                if (bar != null && GodotObject.IsInstanceValid(bar)) bar.Value = done;
 
                 // Let one frame render between chunks so the game never hard-freezes.
-                if (tree != null && end < total)
+                if (tree != null && done < total)
                     await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
             }
 
@@ -103,42 +117,5 @@ internal static class CloneRestThrottlePatch
             overlay?.QueueFree();
         }
         return true;
-    }
-
-    // Top-of-screen overlay: a localized caption + a horizontal percentage progress bar.
-    // Returned as a CanvasLayer (drawn above the map); QueueFree frees both children.
-    private static CanvasLayer MakeProgressOverlay(int total, out ProgressBar bar)
-    {
-        var layer = new CanvasLayer { Name = "Sts2CloneOptimizer_Progress", Layer = 128 };
-
-        var caption = new Label
-        {
-            Text = Strings.Get("cloning"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
-        caption.AnchorLeft = 0f; caption.AnchorRight = 1f; caption.AnchorTop = 0f; caption.AnchorBottom = 0f;
-        caption.OffsetTop = 64f; caption.OffsetBottom = 96f;
-        caption.AddThemeFontSizeOverride("font_size", 24);
-        caption.AddThemeColorOverride("font_color", Colors.White);
-        caption.AddThemeColorOverride("font_outline_color", Colors.Black);
-        caption.AddThemeConstantOverride("outline_size", 6);
-        layer.AddChild(caption);
-
-        bar = new ProgressBar
-        {
-            MinValue = 0,
-            MaxValue = total,
-            Value = 0,
-            ShowPercentage = true,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
-        // Span the width with side margins, just under the caption, ~30px tall.
-        bar.AnchorLeft = 0f; bar.AnchorRight = 1f; bar.AnchorTop = 0f; bar.AnchorBottom = 0f;
-        bar.OffsetLeft = 280f; bar.OffsetRight = -280f; bar.OffsetTop = 102f; bar.OffsetBottom = 134f;
-        bar.AddThemeFontSizeOverride("font_size", 20);
-        layer.AddChild(bar);
-
-        return layer;
     }
 }
